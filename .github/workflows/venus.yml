@@ -59,21 +59,21 @@ jobs:
       - name: Retrieve docker image
         run: docker pull victronenergy/venus-docker
       - name: Run docker image
-        run: docker run -i --name venus-container -v "$(pwd)":/host victronenergy/venus-docker sh
+        run: docker run -i --name venus-container -v "$(pwd)":/host victronenergy/venus-docker
       - name: Check for dockerenv file
         run: |
-          (ls /.dockerenv && echo I: Found dockerenv) || (echo W: No dockerenv)
+          docker exec $(docker ps | grep venus-container | cut -f 1 -d' ') (ls /.dockerenv && echo I: Found dockerenv) || (echo W: No dockerenv)
       - name: Show running instances and execute Installation under Venus OS
         run: |
           docker ps
           echo -n pwd: ; pwd
           ls -l
-          sudo NO_REBOOT=1 ./victron-venus-os-install.sh
+          docker exec $(docker ps | grep venus-container | cut -f 1 -d' ') sudo NO_REBOOT=1 ./victron-venus-os-install.sh
         env:
           NO_REBOOT: 1
       - name: Execute Control-Script under Venus OS
-        run: docker exec -i venus-container /data/etc/Spotmarket-Switcher/controller.sh
+        run: docker exec $(docker ps | grep venus-container | cut -f 1 -d' ') /data/etc/Spotmarket-Switcher/controller.sh
       - name: Execute Run-Script under Venus OS
-        run: sudo data/etc/Spotmarket-Switcher/service/run
+        run: docker exec $(docker ps | grep venus-container | cut -f 1 -d' ') /data/etc/Spotmarket-Switcher/switcher/run
       - name: Be nice and exit the container
-        run: exit
+        run: docker stop $(docker ps | grep venus-container | cut -f 1 -d' ')
